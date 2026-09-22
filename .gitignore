@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+*/node_modules/
+venv/
+*/venv/
+.venv/
+*/.venv/
+
+# Python cache & build
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+*/.pytest_cache/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Next.js build output
+.next/
+*/.next/
+out/
+*/out/
+.vercel
+*/.vercel
+*.tsbuildinfo
+next-env.d.ts
+*/next-env.d.ts
+
+# Environment variables
+.env
+*/.env
+.env.local
+.env.*.local
+!.env.example
+!*/.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Internal tooling
+.jetro/
+.gemini/

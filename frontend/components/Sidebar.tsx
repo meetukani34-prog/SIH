@@ -37,7 +37,7 @@ const navGroups: NavGroup[] = [
   {
     label: "OPERATIONAL CORE",
     items: [
-      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/dashboard", label: "Command Center", icon: LayoutDashboard },
       { href: "/trials", label: "Clinical Trials", icon: FlaskConical },
       { href: "/participants", label: "Cohort Registry", icon: Users },
     ],
@@ -45,14 +45,14 @@ const navGroups: NavGroup[] = [
   {
     label: "SAFETY & PHARMACOVIGILANCE",
     items: [
-      { href: "/adverse-events", label: "Safety & AEs", icon: ShieldAlert, highlight: "24h" },
+      { href: "/adverse-events", label: "Safety & Signals", icon: ShieldAlert, highlight: "24h" },
       { href: "/terminology", label: "AI Terminology", icon: Sparkles, badge: "AI" },
     ],
   },
   {
     label: "GOVERNANCE & STATUTORY",
     items: [
-      { href: "/compliance", label: "Ethics & Clearances", icon: FileCheck2 },
+      { href: "/compliance", label: "Compliance & CAPA", icon: FileCheck2 },
       { href: "/documents", label: "Document Vault", icon: FolderLock },
       { href: "/audit", label: "Audit Trail Ledger", icon: History },
     ],

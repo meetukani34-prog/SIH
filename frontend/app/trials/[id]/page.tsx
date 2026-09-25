@@ -29,6 +29,8 @@ import {
   AdverseEvent,
   EthicsReview,
   DocumentRecord,
+  CtriCompleteness,
+  ParticipantVisit,
 } from "@/lib/types";
 import { StatusBadge, SeverityBadge, SaeCountdownBadge } from "@/components/Badges";
 import { formatDate, formatDateTime } from "@/lib/utils";
@@ -48,6 +50,11 @@ export default function TrialDetailWorkspace() {
   const [adverseEvents, setAdverseEvents] = useState<AdverseEvent[]>([]);
   const [ethicsReviews, setEthicsReviews] = useState<EthicsReview[]>([]);
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
+  const [ctriCompleteness, setCtriCompleteness] = useState<CtriCompleteness | null>(null);
+  const [selectedParticipantForVisits, setSelectedParticipantForVisits] = useState<Participant | null>(null);
+  const [participantVisits, setParticipantVisits] = useState<ParticipantVisit[]>([]);
+  const [loadingVisits, setLoadingVisits] = useState(false);
+  const [showVisitsModal, setShowVisitsModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<string | null>(null);
 
@@ -114,22 +121,39 @@ export default function TrialDetailWorkspace() {
   const loadTrialData = async () => {
     if (!trialId) return;
     try {
-      const [tData, pData, aeData, erData, docData] = await Promise.all([
+      const [tData, pData, aeData, erData, docData, ctriData] = await Promise.all([
         api.getTrial(trialId),
         api.getParticipants({ trial_id: trialId }),
         api.getAdverseEvents({ trial_id: trialId }),
         api.getEthicsReviews({ trial_id: trialId }),
         api.getDocuments({ trial_id: trialId }),
+        api.getCtriCompleteness(trialId).catch(() => null),
       ]);
       setTrial(tData);
       setParticipants(pData);
       setAdverseEvents(aeData);
       setEthicsReviews(erData);
       setDocuments(docData);
+      if (ctriData) setCtriCompleteness(ctriData);
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenVisits = async (p: Participant) => {
+    setSelectedParticipantForVisits(p);
+    setShowVisitsModal(true);
+    setLoadingVisits(true);
+    try {
+      const visits = await api.getParticipantVisits(p.id);
+      setParticipantVisits(visits);
+    } catch (e) {
+      console.error(e);
+      setParticipantVisits([]);
+    } finally {
+      setLoadingVisits(false);
     }
   };
 
@@ -213,6 +237,79 @@ export default function TrialDetailWorkspace() {
                 ))}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* 11-Step Visual Study Lifecycle Stepper */}
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+              Clinical Trial Lifecycle Governance (11-Stage Workflow)
+            </h3>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+              CDSCO / ICMR Compliant
+            </span>
+          </div>
+          <span className="text-xs text-slate-500 font-medium">
+            Current Stage: <strong className="text-slate-800">{trial.status}</strong>
+          </span>
+        </div>
+
+        {/* Stepper bubbles */}
+        <div className="flex items-center justify-between w-full overflow-x-auto pb-2 pt-1 gap-1">
+          {[
+            { num: 1, name: "Concept", stage: "DRAFT" },
+            { num: 2, name: "Protocol", stage: "DRAFT" },
+            { num: 3, name: "Ethics", stage: "SUBMITTED" },
+            { num: 4, name: "CTRI", stage: "ACTIVE" },
+            { num: 5, name: "Site Active", stage: "ACTIVE" },
+            { num: 6, name: "Screening", stage: "ENROLLING" },
+            { num: 7, name: "Enrollment", stage: "ENROLLING" },
+            { num: 8, name: "Randomize", stage: "ENROLLING" },
+            { num: 9, name: "Visits", stage: "ENROLLING" },
+            { num: 10, name: "Cleaning", stage: "COMPLETED" },
+            { num: 11, name: "Close-out", stage: "COMPLETED" },
+          ].map((st) => {
+            const statusOrder: Record<string, number> = {
+              DRAFT: 1,
+              SUBMITTED: 3,
+              ACTIVE: 5,
+              ENROLLING: 8,
+              SUSPENDED: 8,
+              COMPLETED: 11,
+            };
+            const currentStageNum = statusOrder[trial.status] || 1;
+            const isCompleted = st.num < currentStageNum;
+            const isCurrent = st.num === currentStageNum;
+
+            return (
+              <div key={st.num} className="flex flex-col items-center min-w-[70px] text-center shrink-0">
+                <div
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all shadow-xs ${
+                    isCompleted
+                      ? "bg-emerald-600 text-white"
+                      : isCurrent
+                      ? "bg-blue-600 text-white ring-4 ring-blue-100"
+                      : "bg-slate-100 text-slate-400 border border-slate-200"
+                  }`}
+                >
+                  {isCompleted ? "✓" : st.num}
+                </div>
+                <span
+                  className={`text-[10px] font-semibold mt-1.5 leading-tight ${
+                    isCurrent
+                      ? "text-blue-700 font-bold"
+                      : isCompleted
+                      ? "text-slate-800"
+                      : "text-slate-400"
+                  }`}
+                >
+                  {st.name}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -308,6 +405,67 @@ export default function TrialDetailWorkspace() {
                 </div>
               </div>
             </div>
+
+            {/* CTRI 8-Point Completeness Score Widget */}
+            {ctriCompleteness && (
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+                      CTRI Regulatory Completeness Audit
+                    </h3>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        ctriCompleteness.is_complete
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : "bg-amber-50 text-amber-700 border border-amber-200"
+                      }`}
+                    >
+                      {ctriCompleteness.is_complete ? "Compliant" : "Action Required"}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-black text-slate-900">
+                      {ctriCompleteness.score_percentage}%
+                    </span>
+                    <span className="text-xs text-slate-400">Score</span>
+                  </div>
+                </div>
+
+                {/* Checklist items */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  {ctriCompleteness.checklist.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="p-2 rounded-lg border border-slate-100 flex items-center justify-between bg-slate-50/50"
+                    >
+                      <span className="text-slate-600 font-medium">{item.label}</span>
+                      <span
+                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                          item.satisfied
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-rose-100 text-rose-800"
+                        }`}
+                      >
+                        {item.satisfied ? "✓ Satisfied" : "✗ Missing"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Recommendations */}
+                {ctriCompleteness.recommendations.length > 0 && (
+                  <div className="p-3 rounded-lg bg-amber-50/60 border border-amber-200 text-xs space-y-1">
+                    <span className="font-bold text-amber-900 block">Regulatory Gaps to Address:</span>
+                    <ul className="list-disc list-inside text-amber-800 space-y-0.5 text-[11px]">
+                      {ctriCompleteness.recommendations.map((rec, rIdx) => (
+                        <li key={rIdx}>{rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -381,12 +539,13 @@ export default function TrialDetailWorkspace() {
                   <th className="px-6 py-3">Status</th>
                   <th className="px-6 py-3">Last Visit</th>
                   <th className="px-6 py-3">Next Scheduled Visit</th>
+                  <th className="px-6 py-3 text-right">Visits Timeline</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {participants.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-slate-400">
+                    <td colSpan={8} className="px-6 py-8 text-center text-slate-400">
                       No participants currently enrolled for this trial.
                     </td>
                   </tr>
@@ -402,6 +561,15 @@ export default function TrialDetailWorkspace() {
                       </td>
                       <td className="px-6 py-3.5 text-slate-600">{formatDate(p.last_visit)}</td>
                       <td className="px-6 py-3.5 font-semibold text-slate-800">{formatDate(p.next_visit)}</td>
+                      <td className="px-6 py-3.5 text-right">
+                        <button
+                          onClick={() => handleOpenVisits(p)}
+                          className="px-2.5 py-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold text-[11px] transition-colors inline-flex items-center gap-1 border border-emerald-200 cursor-pointer"
+                        >
+                          <Calendar className="w-3 h-3" />
+                          5 Visits
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -695,6 +863,122 @@ export default function TrialDetailWorkspace() {
         description={`You are modifying the lifecycle status of '${trial.study_id}' to '${targetStatus}'. State your clinical/regulatory justification.`}
         confirmButtonText="Ratify Status Change"
       />
+
+      {/* Participant Visit Schedule Timeline Modal */}
+      {showVisitsModal && selectedParticipantForVisits && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    {selectedParticipantForVisits.participant_code}
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {selectedParticipantForVisits.age_group || "Adult"} · {selectedParticipantForVisits.sex || "Undisclosed"}
+                  </span>
+                </div>
+                <h3 className="text-sm font-bold text-slate-900 mt-1">
+                  Participant Protocol Visit Schedule (5-Milestone Timeline)
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowVisitsModal(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4">
+              {loadingVisits ? (
+                <div className="py-12 text-center text-xs text-slate-400 flex flex-col items-center gap-2">
+                  <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                  Loading visit milestones and CRF telemetry...
+                </div>
+              ) : participantVisits.length === 0 ? (
+                <div className="py-8 text-center text-xs text-slate-400">
+                  No scheduled visit events generated for this subject yet.
+                </div>
+              ) : (
+                <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+                  {participantVisits.map((v, i) => {
+                    const isDone = v.status === "COMPLETED";
+                    const isMissed = v.status === "MISSED" || v.status === "WINDOW_EXCEEDED";
+
+                    return (
+                      <div key={v.id || i} className="relative">
+                        <div
+                          className={`absolute -left-[27px] top-1 w-5 h-5 rounded-full border-2 bg-white flex items-center justify-center text-[10px] font-bold ${
+                            isDone
+                              ? "border-emerald-500 text-emerald-600 bg-emerald-50"
+                              : isMissed
+                              ? "border-rose-500 text-rose-600 bg-rose-50"
+                              : "border-slate-300 text-slate-400"
+                          }`}
+                        >
+                          {isDone ? "✓" : i + 1}
+                        </div>
+
+                        <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-900">{v.visit_name}</span>
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                                isDone
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : isMissed
+                                  ? "bg-rose-100 text-rose-800"
+                                  : "bg-blue-100 text-blue-800"
+                              }`}
+                            >
+                              {v.status.replace("_", " ")}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
+                            <div>
+                              <span className="text-slate-400 block text-[11px]">Protocol Window:</span>
+                              <span>Target Day {v.target_day} (±{v.window_after_days}d)</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 block text-[11px]">Scheduled / Actual:</span>
+                              <span>{formatDate(v.scheduled_date)} {v.actual_date ? `· ${formatDate(v.actual_date)}` : ""}</span>
+                            </div>
+                          </div>
+
+                          <div className="pt-2 border-t border-slate-100 flex items-center gap-4 text-[11px]">
+                            <span className={v.vital_signs_recorded ? "text-emerald-700 font-semibold" : "text-slate-400"}>
+                              {v.vital_signs_recorded ? "✓ Vitals Recorded" : "○ Vitals Pending"}
+                            </span>
+                            <span className={v.crf_completed ? "text-emerald-700 font-semibold" : "text-slate-400"}>
+                              {v.crf_completed ? "✓ eCRF Complete" : "○ eCRF Open"}
+                            </span>
+                          </div>
+                          {v.notes && (
+                            <p className="text-[11px] text-slate-500 italic bg-slate-50 p-2 rounded-lg">
+                              Note: {v.notes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+              <button
+                onClick={() => setShowVisitsModal(false)}
+                className="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-colors"
+              >
+                Close Schedule
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

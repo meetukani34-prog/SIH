@@ -207,3 +207,159 @@ export interface DashboardMetrics {
     sae_count: number;
   }[];
 }
+
+export interface CommandCenterMetrics {
+  total_studies: number;
+  studies_by_risk: {
+    on_track: number;
+    at_risk: number;
+    critical: number;
+  };
+  patient_metrics: {
+    total_enrolled: number;
+    target_enrolled: number;
+    enrolled_percentage: number;
+    active_participants: number;
+    completed_participants: number;
+  };
+  safety_counts: {
+    total_ae: number;
+    serious_ae: number;
+    pending_pv_review: number;
+    overdue_24h_reports: number;
+    potential_signals: number;
+  };
+  quality_metrics: {
+    open_queries: number;
+    critical_deviations: number;
+    major_deviations: number;
+    data_cleanliness_pct: number;
+  };
+  overdue_items: {
+    sae_overdue: number;
+    ethics_lapsed: number;
+    queries_aging: number;
+  };
+}
+
+export interface CommandCenterAlert {
+  id: string;
+  alert_type: "RECRUITMENT_LAG" | "ETHICS_EXPIRY" | "CTRI_RENEWAL" | "SAE_24H_STATUTORY" | "SIGNAL_DISPROPORTIONALITY";
+  severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+  title: string;
+  description: string;
+  trial_id?: string;
+  study_id?: string;
+  ctri_number?: string;
+  hours_remaining?: number;
+  action_label?: string;
+  action_path?: string;
+  created_at: string;
+}
+
+export interface ProtocolDeviation {
+  id: string;
+  deviation_code: string;
+  trial_id: string;
+  participant_id?: string;
+  site_id?: string;
+  deviation_type: string;
+  severity: "CRITICAL" | "MAJOR" | "MINOR";
+  description: string;
+  capa_plan?: string;
+  resolution_status: "OPEN" | "UNDER_REVIEW" | "RESOLVED" | "CLOSED";
+  root_cause?: string;
+  reported_by_id?: string;
+  resolved_by_id?: string;
+  resolved_at?: string;
+  created_at: string;
+  trial?: {
+    study_id: string;
+    title: string;
+  };
+  participant?: {
+    participant_code: string;
+  };
+}
+
+export interface DataQualityQuery {
+  id: string;
+  query_code: string;
+  trial_id: string;
+  participant_id?: string;
+  visit_name?: string;
+  field_name?: string;
+  discrepancy_type: string;
+  query_text: string;
+  resolution_text?: string;
+  status: "OPEN" | "ANSWERED" | "RESOLVED" | "CANCELLED";
+  severity: "CRITICAL" | "MAJOR" | "MINOR";
+  raised_by_id?: string;
+  resolved_by_id?: string;
+  resolved_at?: string;
+  created_at: string;
+  trial?: {
+    study_id: string;
+    title: string;
+  };
+  participant?: {
+    participant_code: string;
+  };
+}
+
+export interface ParticipantVisit {
+  id: string;
+  participant_id: string;
+  visit_name: string;
+  target_day: number;
+  window_before_days: number;
+  window_after_days: number;
+  scheduled_date?: string;
+  actual_date?: string;
+  status: "SCHEDULED" | "COMPLETED" | "MISSED" | "WINDOW_EXCEEDED" | "CANCELLED";
+  vital_signs_recorded: boolean;
+  crf_completed: boolean;
+  notes?: string;
+  created_at: string;
+}
+
+export interface SafetySignal {
+  id: string;
+  formulation_name: string;
+  trial_id: string;
+  study_id: string;
+  event_term: string;
+  observed_count: number;
+  expected_count: number;
+  prr_score: number;
+  signal_status: "SIGNAL_DETECTED" | "BENIGN_VARIATION" | "CONFIRMED";
+  confidence_level: "HIGH" | "MEDIUM" | "LOW";
+  notes?: string;
+  flagged_at: string;
+}
+
+export interface SaeWorkflowStep {
+  step_number: number;
+  name: string;
+  description: string;
+  status: "COMPLETED" | "CURRENT" | "PENDING";
+  timestamp?: string;
+  actor?: string;
+  comments?: string;
+}
+
+export interface CtriCompleteness {
+  trial_id: string;
+  study_id: string;
+  score_percentage: number;
+  is_complete: boolean;
+  checklist: {
+    category: string;
+    label: string;
+    field: string;
+    satisfied: boolean;
+    value: any;
+  }[];
+  recommendations: string[];
+}
+

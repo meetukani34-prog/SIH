@@ -10,9 +10,11 @@ import {
   CheckCircle2,
   AlertTriangle,
   UserCheck,
+  Search,
 } from "lucide-react";
 import { api, getCurrentUser, setCurrentUser, setToken } from "@/lib/api";
 import { NotificationItem, UserRole } from "@/lib/types";
+import { OmniSearch } from "@/components/OmniSearch";
 
 const DEMO_PERSONAS: { role: UserRole; name: string; email: string; institution: string }[] = [
   { role: "PI", name: "Dr. Rajesh Sharma", email: "pi@ayurctms.in", institution: "AIIA New Delhi" },
@@ -31,6 +33,7 @@ export function Header() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
   const [showRoleMenu, setShowRoleMenu] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
     function updateClocks() {
@@ -98,8 +101,19 @@ export function Header() {
         </span>
       </div>
 
-      {/* Right controls: Statutory Clock, Role Quick-Switch, Notification Bell */}
-      <div className="flex items-center gap-4">
+      {/* Right controls: OmniSearch, Statutory Clock, Role Quick-Switch, Notification Bell */}
+      <div className="flex items-center gap-3">
+        {/* Global Search Button */}
+        <button
+          onClick={() => setShowSearch(true)}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs text-slate-500 hover:text-slate-800 transition-colors shadow-2xs"
+          title="Open Global Search (Ctrl+K)"
+        >
+          <Search className="w-3.5 h-3.5 text-slate-400" />
+          <span className="hidden sm:inline">Search studies, CTRI, subjects...</span>
+          <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-white border border-slate-200 font-mono text-slate-400">Ctrl K</kbd>
+        </button>
+
         {/* Statutory Dual Regulatory Clock */}
         <div className="hidden lg:flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1 rounded-lg text-xs font-mono text-slate-700">
           <Clock className="w-3.5 h-3.5 text-slate-400" />
@@ -213,6 +227,8 @@ export function Header() {
           )}
         </div>
       </div>
+
+      <OmniSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />
     </header>
   );
 }

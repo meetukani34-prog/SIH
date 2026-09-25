@@ -10,6 +10,14 @@ import {
   DashboardMetrics,
   SaeAlert,
   TerminologySuggestion,
+  CommandCenterMetrics,
+  CommandCenterAlert,
+  ProtocolDeviation,
+  DataQualityQuery,
+  ParticipantVisit,
+  SafetySignal,
+  SaeWorkflowStep,
+  CtriCompleteness,
 } from "./types";
 
 const API_BASE_URL =
@@ -282,4 +290,77 @@ export const api = {
     const query = role ? `?role=${role}` : "";
     return request<User[]>(`/users${query}`);
   },
+
+  // Command Center
+  getCommandCenterMetrics: () => request<CommandCenterMetrics>("/command-center/metrics"),
+  getCommandCenterAlerts: () => request<CommandCenterAlert[]>("/command-center/alerts"),
+
+  // Protocol Deviations
+  getProtocolDeviations: (params?: {
+    trial_id?: string;
+    severity?: string;
+    status?: string;
+    limit?: number;
+    skip?: number;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.trial_id) query.append("trial_id", params.trial_id);
+    if (params?.severity) query.append("severity", params.severity);
+    if (params?.status) query.append("status", params.status);
+    if (params?.limit !== undefined) query.append("limit", String(params.limit));
+    if (params?.skip !== undefined) query.append("skip", String(params.skip));
+    return request<ProtocolDeviation[]>(`/deviations?${query.toString()}`);
+  },
+
+  resolveProtocolDeviation: (id: string, data: { capa_plan: string; root_cause?: string; resolution_notes?: string }) =>
+    request<ProtocolDeviation>(`/deviations/${id}/resolve`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  // Data Quality
+  getDataQualityQueries: (params?: {
+    trial_id?: string;
+    severity?: string;
+    status?: string;
+    discrepancy_type?: string;
+    limit?: number;
+    skip?: number;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.trial_id) query.append("trial_id", params.trial_id);
+    if (params?.severity) query.append("severity", params.severity);
+    if (params?.status) query.append("status", params.status);
+    if (params?.discrepancy_type) query.append("discrepancy_type", params.discrepancy_type);
+    if (params?.limit !== undefined) query.append("limit", String(params.limit));
+    if (params?.skip !== undefined) query.append("skip", String(params.skip));
+    return request<DataQualityQuery[]>(`/data-quality/queries?${query.toString()}`);
+  },
+
+  resolveDataQualityQuery: (id: string, resolution_text: string) =>
+    request<DataQualityQuery>(`/data-quality/queries/${id}/resolve`, {
+      method: "PUT",
+      body: JSON.stringify({ resolution_text }),
+    }),
+
+  // Safety Center & Signals
+  getSafetySignals: (params?: { trial_id?: string; formulation_name?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.trial_id) query.append("trial_id", params.trial_id);
+    if (params?.formulation_name) query.append("formulation_name", params.formulation_name);
+    return request<SafetySignal[]>(`/safety-center/signals?${query.toString()}`);
+  },
+
+  getSaeWorkflow: (saeId: string) =>
+    request<{ sae_id: string; current_stage: string; steps: SaeWorkflowStep[] }>(
+      `/safety-center/sae-workflow/${saeId}`
+    ),
+
+  // CTRI Completeness
+  getCtriCompleteness: (trialId: string) =>
+    request<CtriCompleteness>(`/ctri/completeness/${trialId}`),
+
+  // Participant Visits
+  getParticipantVisits: (participantId: string) =>
+    request<ParticipantVisit[]>(`/visits/participant/${participantId}`),
 };

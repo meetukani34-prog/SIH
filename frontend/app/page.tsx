@@ -23,7 +23,13 @@ import {
   Building2,
   Star,
   CheckCircle2,
+  ExternalLink,
+  FileText,
+  Info,
+  Award,
 } from "lucide-react";
+import { LegalModal, LegalTabType } from "@/components/LegalModal";
+
 
 const FEATURES = [
   {
@@ -124,6 +130,14 @@ const STATS = [
 export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
   const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set());
+  const [legalModalOpen, setLegalModalOpen] = useState(false);
+  const [legalModalTab, setLegalModalTab] = useState<LegalTabType>("about");
+
+  const openLegal = (tab: LegalTabType) => {
+    setLegalModalTab(tab);
+    setLegalModalOpen(true);
+  };
+
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -598,21 +612,154 @@ export default function LandingPage() {
       </section>
 
       {/* ─── FOOTER ─── */}
-      <footer className="py-10 border-t border-slate-800/50 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center">
-              <Leaf className="w-4 h-4 text-white" />
+      <footer className="pt-16 pb-12 border-t border-slate-800/80 bg-slate-950/80 px-4">
+        <div className="max-w-6xl mx-auto">
+          {/* Top section: Brand & 3 Columns */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+            {/* Col 1: Brand & Tagline */}
+            <div className="md:col-span-2 space-y-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center shadow-lg shadow-emerald-950/40">
+                  <Leaf className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-lg font-black text-white tracking-tight">AyurCTMS</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  SIH 2024
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
+                India&apos;s pioneering Clinical Trial Management System designed specifically for Ayurveda and Traditional Medicine formulations — unified with 21 CFR Part 11 and AYUSH GCP compliance.
+              </p>
+              <div className="flex items-center gap-2 text-xs text-emerald-400/90 font-medium">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>CDSCO &amp; Ministry of AYUSH Aligned Architecture</span>
+              </div>
             </div>
-            <span className="text-sm font-bold text-slate-400">AyurCTMS</span>
-            <span className="text-xs text-slate-600">|</span>
-            <span className="text-xs text-slate-600">SIH 2024 Project</span>
+
+            {/* Col 2: Platform Links */}
+            <div>
+              <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-4">Platform</h4>
+              <ul className="space-y-2.5 text-xs">
+                <li>
+                  <Link href="/login" className="text-slate-400 hover:text-emerald-400 transition-colors">
+                    Clinical Portal Login
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/signup" className="text-slate-400 hover:text-emerald-400 transition-colors">
+                    Request Investigator Access
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/sarvottam" className="text-slate-400 hover:text-amber-400 transition-colors flex items-center gap-1.5">
+                    <Lock className="w-3 h-3 text-amber-400" />
+                    Super Admin Console
+                  </Link>
+                </li>
+                <li>
+                  <a
+                    href="https://ayurctms-backend.vercel.app/docs"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-1"
+                  >
+                    API Documentation <ExternalLink className="w-3 h-3 opacity-70" />
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Col 3: Legal & Governance (Modal Triggers) */}
+            <div>
+              <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-4">
+                Governance &amp; Trust
+              </h4>
+              <ul className="space-y-2.5 text-xs">
+                <li>
+                  <button
+                    onClick={() => openLegal("about")}
+                    className="text-slate-400 hover:text-emerald-400 transition-colors text-left flex items-center gap-1.5 group"
+                  >
+                    <Info className="w-3 h-3 text-slate-500 group-hover:text-emerald-400 transition-colors" />
+                    About Us
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => openLegal("terms")}
+                    className="text-slate-400 hover:text-emerald-400 transition-colors text-left flex items-center gap-1.5 group"
+                  >
+                    <FileText className="w-3 h-3 text-slate-500 group-hover:text-emerald-400 transition-colors" />
+                    Terms &amp; Conditions
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => openLegal("privacy")}
+                    className="text-slate-400 hover:text-emerald-400 transition-colors text-left flex items-center gap-1.5 group"
+                  >
+                    <Lock className="w-3 h-3 text-slate-500 group-hover:text-emerald-400 transition-colors" />
+                    Privacy Policy &amp; DPDPA
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => openLegal("compliance")}
+                    className="text-slate-400 hover:text-emerald-400 transition-colors text-left flex items-center gap-1.5 group"
+                  >
+                    <Award className="w-3 h-3 text-slate-500 group-hover:text-emerald-400 transition-colors" />
+                    AYUSH GCP &amp; 21 CFR
+                  </button>
+                </li>
+              </ul>
+            </div>
           </div>
-          <p className="text-xs text-slate-600">
-            © {new Date().getFullYear()} AyurCTMS. Clinical Trial Management & Regulatory Compliance Platform.
-          </p>
+
+          {/* Bottom Bar: Copyright & Quick Links */}
+          <div className="pt-8 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+            <p>
+              © {new Date().getFullYear()} AyurCTMS. Clinical Trial Management &amp; Regulatory Compliance Platform.
+            </p>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => openLegal("terms")}
+                className="hover:text-slate-300 transition-colors cursor-pointer"
+              >
+                Terms &amp; Conditions
+              </button>
+              <span>•</span>
+              <button
+                onClick={() => openLegal("privacy")}
+                className="hover:text-slate-300 transition-colors cursor-pointer"
+              >
+                Privacy Policy
+              </button>
+              <span>•</span>
+              <button
+                onClick={() => openLegal("about")}
+                className="hover:text-slate-300 transition-colors cursor-pointer"
+              >
+                About Us
+              </button>
+              <span>•</span>
+              <button
+                onClick={() => openLegal("compliance")}
+                className="hover:text-slate-300 transition-colors cursor-pointer"
+              >
+                Compliance
+              </button>
+            </div>
+          </div>
         </div>
       </footer>
+
+      {/* Legal & Regulatory Modal Popup */}
+      <LegalModal
+        isOpen={legalModalOpen}
+        onClose={() => setLegalModalOpen(false)}
+        initialTab={legalModalTab}
+      />
+
     </div>
   );
 }

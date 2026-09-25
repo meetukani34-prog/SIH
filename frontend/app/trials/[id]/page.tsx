@@ -710,7 +710,7 @@ export default function TrialDetailWorkspace() {
                     </td>
                     <td className="px-6 py-3.5 font-semibold text-slate-700">{doc.doc_type}</td>
                     <td className="px-6 py-3.5 font-mono font-bold text-slate-800">v{doc.version}</td>
-                    <td className="px-6 py-3.5 text-slate-500">{(doc.file_size / 1024).toFixed(1)} KB</td>
+                    <td className="px-6 py-3.5 text-slate-500">{((Number(doc.file_size || 0)) / 1024).toFixed(1)} KB</td>
                     <td className="px-6 py-3.5 font-mono text-[11px] text-slate-600 truncate max-w-xs">
                       {doc.checksum_sha256}
                     </td>

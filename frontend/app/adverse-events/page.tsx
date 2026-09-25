@@ -549,45 +549,54 @@ export default function AdverseEventsPage() {
                     </td>
                   </tr>
                 ) : (
-                  signals.map((sig) => (
-                    <tr key={sig.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3.5 px-4 font-bold text-slate-900">{sig.formulation_name}</td>
-                      <td className="py-3.5 px-4 font-medium text-slate-800">{sig.event_term}</td>
-                      <td className="py-3.5 px-4 font-mono text-emerald-700">{sig.study_id}</td>
-                      <td className="py-3.5 px-4 text-center font-bold text-slate-800">{sig.observed_count}</td>
-                      <td className="py-3.5 px-4 text-center text-slate-500">{sig.expected_count}</td>
-                      <td className="py-3.5 px-4 text-center">
-                        <span
-                          className={`font-mono font-bold text-xs px-2 py-0.5 rounded ${
-                            sig.prr_score >= 2.0
-                              ? "bg-rose-100 text-rose-800 border border-rose-200"
-                              : "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                          }`}
-                        >
-                          {sig.prr_score.toFixed(2)}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-center">
-                        <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
-                          {sig.confidence_level}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                            sig.signal_status === "SIGNAL_DETECTED"
-                              ? "bg-rose-100 text-rose-800 border border-rose-200 animate-pulse"
-                              : "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                          }`}
-                        >
-                          {sig.signal_status.replace("_", " ")}
-                        </span>
-                        {sig.notes && (
-                          <p className="text-[10px] text-slate-500 mt-0.5 max-w-xs">{sig.notes}</p>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                  signals.map((sig, idx) => {
+                    const prrVal = Number(sig.prr_score ?? (sig as any).disproportionality_ratio ?? 0);
+                    const prrFormatted = !isNaN(prrVal) ? prrVal.toFixed(2) : "0.00";
+                    const isHighRisk = prrVal >= 2.0;
+                    const eventTerm = sig.event_term || (sig as any).adverse_event_term || "Adverse Event";
+                    const sigStatus = (sig.signal_status || "SIGNAL_DETECTED").replace(/_/g, " ");
+                    const sigNotes = sig.notes || (sig as any).recommendation || "";
+
+                    return (
+                      <tr key={sig.id || `sig-${idx}`} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="py-3.5 px-4 font-bold text-slate-900">{sig.formulation_name || "Formulation"}</td>
+                        <td className="py-3.5 px-4 font-medium text-slate-800">{eventTerm}</td>
+                        <td className="py-3.5 px-4 font-mono text-emerald-700">{sig.study_id || "N/A"}</td>
+                        <td className="py-3.5 px-4 text-center font-bold text-slate-800">{sig.observed_count ?? 0}</td>
+                        <td className="py-3.5 px-4 text-center text-slate-500">{sig.expected_count ?? 0}</td>
+                        <td className="py-3.5 px-4 text-center">
+                          <span
+                            className={`font-mono font-bold text-xs px-2 py-0.5 rounded ${
+                              isHighRisk
+                                ? "bg-rose-100 text-rose-800 border border-rose-200"
+                                : "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                            }`}
+                          >
+                            {prrFormatted}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-center">
+                          <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                            {sig.confidence_level || "MODERATE"}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                              (sig.signal_status || "") === "SIGNAL_DETECTED"
+                                ? "bg-rose-100 text-rose-800 border border-rose-200 animate-pulse"
+                                : "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                            }`}
+                          >
+                            {sigStatus}
+                          </span>
+                          {sigNotes && (
+                            <p className="text-[10px] text-slate-500 mt-0.5 max-w-xs">{sigNotes}</p>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

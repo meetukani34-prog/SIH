@@ -194,7 +194,7 @@ export default function DocumentsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 font-mono font-bold text-slate-800">v{d.version}</td>
-                    <td className="px-6 py-4 text-slate-500">{(d.file_size / 1024).toFixed(1)} KB</td>
+                    <td className="px-6 py-4 text-slate-500">{((Number(d.file_size || 0)) / 1024).toFixed(1)} KB</td>
                     <td className="px-6 py-4">
                       <div className="font-mono text-[11px] text-slate-600 truncate max-w-xs bg-slate-50 p-1 rounded border border-slate-200">
                         {d.checksum_sha256}

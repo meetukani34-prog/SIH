@@ -415,7 +415,7 @@ export default function DashboardPage() {
                         {alert.study_id && (
                           <span className="text-xs font-bold text-slate-800">{alert.study_id}</span>
                         )}
-                        {alert.hours_remaining !== undefined && alert.hours_remaining > 0 && (
+                        {typeof alert.hours_remaining === "number" && !isNaN(alert.hours_remaining) && alert.hours_remaining > 0 && (
                           <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-200/80 text-rose-900 font-bold">
                             ⏱ {alert.hours_remaining.toFixed(1)}h remaining
                           </span>
@@ -468,33 +468,40 @@ export default function DashboardPage() {
               {signals.length === 0 ? (
                 <p className="text-xs text-slate-400 italic">No safety signal anomalies detected.</p>
               ) : (
-                signals.map((sig) => (
-                  <div
-                    key={sig.id}
-                    className="p-3 rounded-xl border border-amber-200 bg-amber-50/40 space-y-1.5"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-900">{sig.formulation_name}</span>
-                      <span
-                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
-                          sig.signal_status === "SIGNAL_DETECTED"
-                            ? "bg-rose-100 text-rose-800 border border-rose-200"
-                            : "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                        }`}
-                      >
-                        {sig.signal_status.replace("_", " ")}
-                      </span>
+                signals.map((sig, idx) => {
+                  const prrScore = Number(sig.prr_score ?? (sig as any).disproportionality_ratio ?? 0);
+                  const prrDisplay = !isNaN(prrScore) ? prrScore.toFixed(2) : "0.00";
+                  const eventTerm = sig.event_term || (sig as any).adverse_event_term || "Adverse Event";
+                  const statusStr = (sig.signal_status || "SIGNAL_DETECTED").replace(/_/g, " ");
+
+                  return (
+                    <div
+                      key={sig.id || `sig-${idx}`}
+                      className="p-3 rounded-xl border border-amber-200 bg-amber-50/40 space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-900">{sig.formulation_name || "Formulation"}</span>
+                        <span
+                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                            (sig.signal_status || "") === "SIGNAL_DETECTED"
+                              ? "bg-rose-100 text-rose-800 border border-rose-200"
+                              : "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                          }`}
+                        >
+                          {statusStr}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-slate-600">
+                        <span>Term: <strong>{eventTerm}</strong></span>
+                        <span>PRR Score: <strong className="text-amber-800">{prrDisplay}</strong></span>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-slate-500">
+                        <span>Observed: {sig.observed_count ?? 0} | Expected: {sig.expected_count ?? 0}</span>
+                        <span className="font-semibold text-slate-600">Study: {sig.study_id || "N/A"}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between text-xs text-slate-600">
-                      <span>Term: <strong>{sig.event_term}</strong></span>
-                      <span>PRR Score: <strong className="text-amber-800">{sig.prr_score.toFixed(2)}</strong></span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-500">
-                      <span>Observed: {sig.observed_count} | Expected: {sig.expected_count}</span>
-                      <span className="font-semibold text-slate-600">Study: {sig.study_id}</span>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

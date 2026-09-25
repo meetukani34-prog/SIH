@@ -44,17 +44,21 @@ def detect_safety_signals(db: Session) -> List[Dict[str, Any]]:
             signals.append({
                 "id": f"sig-{trial_id}-{hash(event_term) % 100000}",
                 "formulation_name": intervention_name[:45],
+                "trial_id": str(trial_id),
                 "study_id": study_id,
+                "event_term": event_term,
                 "adverse_event_term": event_term,
                 "severity": severity,
                 "observed_count": observed_count,
                 "expected_count": expected_count,
+                "prr_score": ratio,
                 "disproportionality_ratio": ratio,
-                "signal_status": "FLAGGED_FOR_EXPERT_REVIEW",
+                "signal_status": "SIGNAL_DETECTED",
+                "notes": f"Potential disproportionality detected for {intervention_name[:30]}. Convene AIIA Pharmacovigilance Expert Committee for causality review.",
                 "recommendation": f"Potential disproportionality detected for {intervention_name[:30]}. Convene AIIA Pharmacovigilance Expert Committee for causality review.",
-                "confidence_level": "HIGH" if observed_count >= 5 else "MODERATE"
+                "confidence_level": "HIGH" if observed_count >= 5 else "MEDIUM"
             })
 
     # Sort by ratio descending
-    signals.sort(key=lambda s: s["disproportionality_ratio"], reverse=True)
+    signals.sort(key=lambda s: s["prr_score"], reverse=True)
     return signals[:10]  # Top 10 signals

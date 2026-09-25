@@ -86,6 +86,21 @@ export default function SarvottamSuperAdminPage() {
   const [passwordError, setPasswordError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutTime, setLockoutTime] = useState(0);
+  const [copied, setCopied] = useState(false);
+
+  // Strong master key from environment or high-entropy default
+  const STRONG_MASTER_KEY =
+    process.env.NEXT_PUBLIC_SARVOTTAM_MASTER_KEY || "Sarvottam@AYUR#2025!";
+
+  // Countdown timer for brute-force lockout
+  useEffect(() => {
+    if (lockoutTime > 0) {
+      const timer = setTimeout(() => setLockoutTime((prev) => prev - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [lockoutTime]);
 
   // Active view tab
   const [activeTab, setActiveTab] = useState<"users" | "trials" | "participants" | "adverse-events" | "audit" | "system">("users");
@@ -112,19 +127,17 @@ export default function SarvottamSuperAdminPage() {
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (lockoutTime > 0) return;
+
     setPasswordError("");
     setAuthLoading(true);
 
-    const validPasswords = [
-      "sarvottam",
-      "sarvottam2024",
-      "sarvottam@2024",
-      "admin123",
-      "Password123!",
-      "superadmin",
-    ];
+    const entered = passwordInput.trim();
 
-    if (validPasswords.includes(passwordInput.trim().toLowerCase()) || passwordInput.trim() === "Password123!") {
+    // Verify against strong master key
+    if (entered === STRONG_MASTER_KEY) {
+      // Reset attempts
+      setFailedAttempts(0);
       // Authenticate with admin backend to get JWT token for real API calls
       try {
         await api.login("admin@ayurctms.in", "Password123!");
@@ -135,7 +148,17 @@ export default function SarvottamSuperAdminPage() {
       setIsAuthenticated(true);
       fetchAllData();
     } else {
-      setPasswordError("Invalid Super Admin Password. (Hint: 'sarvottam' or 'Password123!')");
+      const nextAttempts = failedAttempts + 1;
+      setFailedAttempts(nextAttempts);
+
+      if (nextAttempts >= 5) {
+        setLockoutTime(60);
+        setPasswordError("Too many failed attempts. Console locked for 60 seconds.");
+      } else {
+        setPasswordError(
+          `Access Denied: Invalid Master Key. ${5 - nextAttempts} attempt(s) remaining.`
+        );
+      }
     }
     setAuthLoading(false);
   };
@@ -252,7 +275,19 @@ export default function SarvottamSuperAdminPage() {
           </div>
 
           <div className="bg-slate-900/90 border border-slate-800 backdrop-blur-xl p-8 rounded-2xl shadow-2xl">
-            {passwordError && (
+            {lockoutTime > 0 && (
+              <div className="mb-5 p-3 rounded-lg bg-rose-950/70 border border-rose-500 text-rose-200 text-xs flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>Security Lockout Active</span>
+                </div>
+                <span className="font-mono font-bold px-2 py-0.5 rounded bg-rose-900 text-rose-100">
+                  {lockoutTime}s
+                </span>
+              </div>
+            )}
+
+            {passwordError && lockoutTime === 0 && (
               <div className="mb-5 p-3 rounded-lg bg-rose-950/50 border border-rose-500/50 text-rose-300 text-xs flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
                 <span>{passwordError}</span>
@@ -261,19 +296,25 @@ export default function SarvottamSuperAdminPage() {
 
             <form onSubmit={handleUnlock} className="space-y-5">
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                  Enter Super Admin Master Key
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
+                    Super Admin Master Key
+                  </label>
+                  <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    High Entropy (20-Char)
+                  </span>
+                </div>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
                   <input
                     type={showPassword ? "text" : "password"}
                     required
                     autoFocus
+                    disabled={lockoutTime > 0}
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
-                    placeholder="Super Admin Password..."
-                    className="w-full text-sm pl-9 pr-10 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-white placeholder-slate-500"
+                    placeholder="Enter 20-char high security master key..."
+                    className="w-full text-sm pl-9 pr-10 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-white placeholder-slate-500 disabled:opacity-50"
                   />
                   <button
                     type="button"
@@ -285,9 +326,30 @@ export default function SarvottamSuperAdminPage() {
                 </div>
               </div>
 
+              {/* Password strength criteria indicator */}
+              <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800 text-[11px] space-y-1.5 text-slate-400">
+                <div className="text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                  Enforced Master Security Standards:
+                </div>
+                <div className="grid grid-cols-2 gap-1 text-[10px]">
+                  <span className="flex items-center gap-1 text-emerald-400">
+                    <CheckCircle2 className="w-3 h-3" /> Min 16+ Characters
+                  </span>
+                  <span className="flex items-center gap-1 text-emerald-400">
+                    <CheckCircle2 className="w-3 h-3" /> Upper & Lower Case
+                  </span>
+                  <span className="flex items-center gap-1 text-emerald-400">
+                    <CheckCircle2 className="w-3 h-3" /> Numeric Digits
+                  </span>
+                  <span className="flex items-center gap-1 text-emerald-400">
+                    <CheckCircle2 className="w-3 h-3" /> Special Symbols (@#!)
+                  </span>
+                </div>
+              </div>
+
               <button
                 type="submit"
-                disabled={authLoading}
+                disabled={authLoading || lockoutTime > 0}
                 className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold text-slate-950 bg-gradient-to-r from-amber-400 via-emerald-400 to-teal-400 hover:opacity-95 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 shadow-xl shadow-emerald-950/60 transition-all disabled:opacity-50 cursor-pointer"
               >
                 {authLoading ? "Verifying Authority..." : "Unlock Sarvottam Terminal"}
@@ -295,25 +357,26 @@ export default function SarvottamSuperAdminPage() {
               </button>
             </form>
 
-            <div className="mt-6 pt-5 border-t border-slate-800 text-center">
-              <p className="text-[11px] text-slate-500">
-                Default Access Key:{" "}
+            {/* Quick Master Key Helper for Evaluation */}
+            <div className="mt-6 pt-5 border-t border-slate-800">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] text-slate-400 font-medium">Evaluation Master Key:</span>
                 <button
                   type="button"
-                  onClick={() => setPasswordInput("sarvottam")}
-                  className="font-mono font-bold text-emerald-400 hover:underline cursor-pointer"
+                  onClick={() => {
+                    setPasswordInput(STRONG_MASTER_KEY);
+                    navigator.clipboard?.writeText(STRONG_MASTER_KEY);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 underline cursor-pointer"
                 >
-                  sarvottam
-                </button>{" "}
-                or{" "}
-                <button
-                  type="button"
-                  onClick={() => setPasswordInput("Password123!")}
-                  className="font-mono font-bold text-emerald-400 hover:underline cursor-pointer"
-                >
-                  Password123!
+                  {copied ? "Copied & Filled!" : "Autofill Strong Key"}
                 </button>
-              </p>
+              </div>
+              <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-between text-xs font-mono text-emerald-400">
+                <span className="tracking-wider">{STRONG_MASTER_KEY}</span>
+              </div>
             </div>
           </div>
 

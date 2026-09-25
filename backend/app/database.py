@@ -7,12 +7,27 @@ from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from app.config import settings
 
 import os
+import re
+import urllib.parse
 from sqlalchemy.pool import NullPool
 
-db_url = settings.DATABASE_URL
-if db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql://", 1)
+def normalize_db_url(raw_url: str) -> str:
+    raw = (raw_url or "").strip()
+    if raw.startswith("postgres://"):
+        raw = "postgresql://" + raw[11:]
+    
+    # Handle user:pass@host with brackets or unencoded special characters in password
+    match = re.match(r'^(postgresql://)([^:]+):(.*)@([^@]+)$', raw)
+    if match:
+        proto, user, pw, host = match.groups()
+        pw = pw.strip('[]')
+        # If password contains unencoded special characters like @, $, #
+        if not re.search(r'%[0-9a-fA-F]{2}', pw):
+            pw = urllib.parse.quote_plus(pw)
+        return f"{proto}{user}:{pw}@{host}"
+    return raw
 
+db_url = normalize_db_url(settings.DATABASE_URL)
 is_sqlite = db_url.startswith("sqlite")
 
 if is_sqlite:

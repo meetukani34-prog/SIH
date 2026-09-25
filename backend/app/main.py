@@ -9,11 +9,13 @@ from app.database import engine, Base
 import app.models  # Ensure all SQLAlchemy models are registered
 from app.api import api_router
 
-# Initialize database schema tables if not exist
-try:
-    Base.metadata.create_all(bind=engine)
-except Exception as e:
-    print(f"Warning: Database tables could not be created automatically on startup: {e}")
+# Initialize database schema tables if not exist (skip on Vercel serverless for fast cold-starts)
+import os
+if os.getenv("VERCEL", "0") != "1":
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"Warning: Database tables could not be created automatically on startup: {e}")
 
 app = FastAPI(
     title=f"{settings.APP_NAME} API",

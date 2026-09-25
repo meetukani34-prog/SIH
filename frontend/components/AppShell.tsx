@@ -9,23 +9,27 @@ import { getToken } from "@/lib/api";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const isAuthPage = pathname === "/login";
+  const isPublicPage =
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname?.startsWith("/sarvottam");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const token = getToken();
-    if (!token && pathname !== "/login") {
+    if (!token && !isPublicPage) {
       router.push("/login");
     }
-  }, [pathname, router]);
+  }, [pathname, router, isPublicPage]);
 
   if (!mounted) {
-    return <div className="min-h-screen bg-slate-50" />;
+    return <div className="min-h-screen bg-slate-950" />;
   }
 
-  if (isAuthPage) {
-    return <main className="min-h-screen bg-slate-50">{children}</main>;
+  if (isPublicPage) {
+    return <main className="min-h-screen bg-slate-950">{children}</main>;
   }
 
   return (

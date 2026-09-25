@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Leaf, ShieldCheck, Lock, Mail, ArrowRight, UserCheck, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { Leaf, ShieldCheck, Lock, Mail, ArrowRight, UserCheck, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { api } from "@/lib/api";
 import { UserRole } from "@/lib/types";
 
@@ -55,6 +56,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("Password123!");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (loginEmail?: string, loginPassword?: string) => {
     setError("");
@@ -82,9 +84,11 @@ export default function LoginPage() {
       <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-teal-600/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-xl shadow-emerald-950/60 mb-4">
-          <Leaf className="w-8 h-8 text-emerald-100" />
-        </div>
+        <Link href="/" className="inline-block">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-xl shadow-emerald-950/60 mb-4 hover:scale-105 transition-transform">
+            <Leaf className="w-8 h-8 text-emerald-100" />
+          </div>
+        </Link>
         <h2 className="text-2xl font-extrabold text-white tracking-tight">AyurCTMS</h2>
         <p className="text-xs text-slate-400 mt-1">Ayurveda Clinical Trial Management & Regulatory Compliance</p>
         <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -133,12 +137,19 @@ export default function LoginPage() {
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-slate-900"
+                  className="w-full text-sm pl-9 pr-10 py-2 border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-slate-900"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
 
@@ -152,8 +163,21 @@ export default function LoginPage() {
             </button>
           </form>
 
+          {/* Signup link */}
+          <div className="mt-5 pt-4 border-t border-slate-100 text-center">
+            <p className="text-xs text-slate-500">
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/signup"
+                className="font-bold text-emerald-600 hover:text-emerald-700 transition-colors"
+              >
+                Create Account →
+              </Link>
+            </p>
+          </div>
+
           {/* Quick Persona Picker for Judges */}
-          <div className="mt-8 pt-6 border-t border-slate-100">
+          <div className="mt-6 pt-6 border-t border-slate-100">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                 <UserCheck className="w-4 h-4 text-emerald-600" />
@@ -185,6 +209,16 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Back to home */}
+      <div className="mt-6 text-center z-10">
+        <Link
+          href="/"
+          className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+        >
+          ← Back to Home
+        </Link>
       </div>
     </div>
   );

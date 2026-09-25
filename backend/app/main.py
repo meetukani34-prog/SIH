@@ -2,10 +2,12 @@
 FastAPI Backend Application Entrypoint.
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from sqlalchemy.orm import Session
 from app.config import settings
-from app.database import engine, Base
+from app.database import engine, Base, get_db
 import app.models  # Ensure all SQLAlchemy models are registered
 from app.api import api_router
 
@@ -36,21 +38,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from fastapi import Request
-from fastapi.responses import JSONResponse
-
 @app.middleware("http")
 async def handle_vercel_rewrite_paths(request: Request, call_next):
-    # Normalize path if Vercel serverless rewrite prepends the entrypoint path
-    path = request.scope.get("path", "")
-    for prefix in ["/api/index.py", "/api/index", "/backend/api/index.py"]:
-        if path == prefix or path == f"{prefix}/":
-            request.scope["path"] = "/"
-            break
-        elif path.startswith(prefix + "/"):
-            request.scope["path"] = path[len(prefix):]
-            break
+    # Check if Vercel provided original path before rewrite in headers
+    matched_path = request.headers.get("x-matched-path") or request.headers.get("x-invoke-path")
+    if matched_path:
+        clean_path = matched_path.split("?")[0]
+        request.scope["path"] = clean_path
+    else:
+        path = request.scope.get("path", "")
+        for prefix in ["/api/index.py", "/api/index", "/backend/api/index.py"]:
+            if path == prefix or path == f"{prefix}/":
+                request.scope["path"] = "/"
+                break
+            elif path.startswith(prefix + "/"):
+                request.scope["path"] = path[len(prefix):]
+                break
     return await call_next(request)
+
 
 @app.exception_handler(404)
 async def custom_404_handler(request: Request, exc):
@@ -83,6 +88,24 @@ def root():
 @app.get("/health", tags=["Health"])
 def health():
     return {"status": "healthy"}
+
+
+@app.get("/health/db", tags=["Health"])
+def health_db(db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    try:
+        count = db.execute(text("SELECT count(*) FROM trials")).scalar()
+        return {
+            "status": "connected",
+            "database": "Supabase PostgreSQL",
+            "trials_count": count
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
 
 
 @app.get("/api/seed", tags=["Admin"])

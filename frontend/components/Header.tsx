@@ -61,7 +61,8 @@ export function Header() {
 
   const handleSwitchRole = async (persona: (typeof DEMO_PERSONAS)[0]) => {
     try {
-      const data = await api.login(persona.email, "Password123!");
+      const demoPassword = process.env.NEXT_PUBLIC_DEMO_PASSWORD || "";
+      const data = await api.login(persona.email, demoPassword);
       setCurrentUserState(data.user);
       setShowRoleMenu(false);
       window.location.reload();

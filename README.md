@@ -40,7 +40,7 @@ It bridges classical Sanskrit Ayurvedic terminology (Charaka / Sushruta Samhita 
 
 ## 🎭 5 Role-Based Demo Accounts
 
-AyurCTMS enforces strict server-side authorization across five specialized clinical roles. All accounts are pre-seeded with the password: `Password123!`
+AyurCTMS enforces strict server-side authorization across five specialized clinical roles. All credentials, database connection strings, and master keys are managed securely via `.env` files (see `backend/.env.example` and `frontend/.env.example`) and are strictly kept out of version control.
 
 | Role | Demo User | Email | Institutional Scope |
 | :--- | :--- | :--- | :--- |

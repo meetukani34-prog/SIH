@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
 
+    # Master Security Credentials (loaded from .env)
+    SUPERADMIN_MASTER_KEY: str = ""
+    DEFAULT_USER_PASSWORD: str = ""
+
     # CORS
     CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
 

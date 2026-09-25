@@ -52,8 +52,9 @@ const PERSONAS = [
 
 export default function LoginPage() {
   const router = useRouter();
+  const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD || "";
   const [email, setEmail] = useState("pi@ayurctms.in");
-  const [password, setPassword] = useState("Password123!");
+  const [password, setPassword] = useState(DEMO_PASSWORD);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -73,8 +74,8 @@ export default function LoginPage() {
 
   const handlePersonaClick = (personaEmail: string) => {
     setEmail(personaEmail);
-    setPassword("Password123!");
-    handleLogin(personaEmail, "Password123!");
+    setPassword(DEMO_PASSWORD);
+    handleLogin(personaEmail, DEMO_PASSWORD);
   };
 
   return (

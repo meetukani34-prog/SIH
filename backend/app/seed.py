@@ -22,6 +22,7 @@ from app.models.document import Document
 from app.models.audit_log import AuditLog
 from app.models.notification import Notification
 from app.auth.security import get_password_hash
+from app.config import settings
 
 
 def parse_date(s):
@@ -110,7 +111,7 @@ def seed_database(force_refresh: bool = False):
     try:
         now_utc = datetime.now(timezone.utc)
         today = date.today()
-        pw_hash = get_password_hash("Password123!")
+        pw_hash = get_password_hash(settings.DEFAULT_USER_PASSWORD or "Password123!")
 
         # 1. Role-based Demo Accounts
         pi_user = db.query(User).filter(User.email == "pi@ayurctms.in").first()

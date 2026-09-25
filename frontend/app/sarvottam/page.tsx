@@ -90,9 +90,11 @@ export default function SarvottamSuperAdminPage() {
   const [lockoutTime, setLockoutTime] = useState(0);
   const [copied, setCopied] = useState(false);
 
-  // Strong master key from environment or high-entropy default
+  // Master security credentials strictly sourced from environment (.env)
   const STRONG_MASTER_KEY =
-    process.env.NEXT_PUBLIC_SARVOTTAM_MASTER_KEY || "Sarvottam@AYUR#2025!";
+    process.env.NEXT_PUBLIC_SARVOTTAM_MASTER_KEY || "";
+  const DEMO_PASSWORD =
+    process.env.NEXT_PUBLIC_DEMO_PASSWORD || "";
 
   // Countdown timer for brute-force lockout
   useEffect(() => {
@@ -134,13 +136,15 @@ export default function SarvottamSuperAdminPage() {
 
     const entered = passwordInput.trim();
 
-    // Verify against strong master key
-    if (entered === STRONG_MASTER_KEY) {
+    // Verify against strong master key loaded from .env
+    if (STRONG_MASTER_KEY && entered === STRONG_MASTER_KEY) {
       // Reset attempts
       setFailedAttempts(0);
       // Authenticate with admin backend to get JWT token for real API calls
       try {
-        await api.login("admin@ayurctms.in", "Password123!");
+        if (DEMO_PASSWORD) {
+          await api.login("admin@ayurctms.in", DEMO_PASSWORD);
+        }
       } catch (err) {
         console.warn("Backend auth bypassed for superadmin mode", err);
       }
@@ -360,22 +364,26 @@ export default function SarvottamSuperAdminPage() {
             {/* Quick Master Key Helper for Evaluation */}
             <div className="mt-6 pt-5 border-t border-slate-800">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] text-slate-400 font-medium">Evaluation Master Key:</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPasswordInput(STRONG_MASTER_KEY);
-                    navigator.clipboard?.writeText(STRONG_MASTER_KEY);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  }}
-                  className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 underline cursor-pointer"
-                >
-                  {copied ? "Copied & Filled!" : "Autofill Strong Key"}
-                </button>
+                <span className="text-[11px] text-slate-400 font-medium">Evaluation Master Key (.env):</span>
+                {STRONG_MASTER_KEY && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPasswordInput(STRONG_MASTER_KEY);
+                      navigator.clipboard?.writeText(STRONG_MASTER_KEY);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 underline cursor-pointer"
+                  >
+                    {copied ? "Copied & Filled!" : "Autofill Strong Key"}
+                  </button>
+                )}
               </div>
               <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-between text-xs font-mono text-emerald-400">
-                <span className="tracking-wider">{STRONG_MASTER_KEY}</span>
+                <span className="tracking-wider">
+                  {STRONG_MASTER_KEY || "Configure NEXT_PUBLIC_SARVOTTAM_MASTER_KEY in .env.local"}
+                </span>
               </div>
             </div>
           </div>

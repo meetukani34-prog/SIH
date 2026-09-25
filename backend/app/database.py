@@ -17,7 +17,7 @@ def normalize_db_url(raw_url: str) -> str:
         raw = "postgresql://" + raw[11:]
     
     # Handle user:pass@host with brackets or unencoded special characters in password
-    match = re.match(r'^(postgresql://)([^:]+):(.*)@([^@]+)$', raw)
+    match = re.match(r'^(postgresql(?:\+[a-zA-Z0-9_-]+)?://)([^:]+):(.*)@([^@]+)$', raw)
     if match:
         proto, user, pw, host = match.groups()
         pw = pw.strip('[]')
@@ -38,16 +38,30 @@ if is_sqlite:
     )
 else:
     is_serverless = os.getenv("VERCEL", "0") == "1"
+    target_url = db_url
+
+    # Check if psycopg2 driver is available
+    has_psycopg2 = False
+    try:
+        import psycopg2
+        has_psycopg2 = True
+    except Exception:
+        has_psycopg2 = False
+
+    # On Vercel serverless or when psycopg2 is missing, pg8000 is 100% pure Python with zero C-lib dependencies
+    if (is_serverless or not has_psycopg2) and target_url.startswith("postgresql://"):
+        target_url = target_url.replace("postgresql://", "postgresql+pg8000://", 1)
+
     if is_serverless:
         engine = create_engine(
-            db_url,
+            target_url,
             poolclass=NullPool,
             pool_pre_ping=True,
-            echo=settings.DEBUG,
+            echo=False,
         )
     else:
         engine = create_engine(
-            db_url,
+            target_url,
             pool_pre_ping=True,
             pool_size=5,
             max_overflow=10,

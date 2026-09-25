@@ -38,23 +38,42 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import urllib.parse
+
 @app.middleware("http")
 async def handle_vercel_rewrite_paths(request: Request, call_next):
-    # Check if Vercel provided original path before rewrite in headers
-    matched_path = request.headers.get("x-matched-path") or request.headers.get("x-invoke-path")
-    if matched_path:
-        clean_path = matched_path.split("?")[0]
+    # Check if Vercel provided original path via __path query param or headers
+    custom_path = request.query_params.get("__path")
+    if custom_path:
+        clean_path = custom_path
+        if not clean_path.startswith("/"):
+            clean_path = "/" + clean_path
+        while clean_path.startswith("//"):
+            clean_path = clean_path[1:]
         request.scope["path"] = clean_path
+
+        # Clean __path from query_string
+        qs = request.scope.get("query_string", b"").decode("latin1")
+        if qs:
+            params = urllib.parse.parse_qsl(qs, keep_blank_values=True)
+            filtered = [(k, v) for k, v in params if k != "__path"]
+            request.scope["query_string"] = urllib.parse.urlencode(filtered).encode("latin1")
     else:
-        path = request.scope.get("path", "")
-        for prefix in ["/api/index.py", "/api/index", "/backend/api/index.py"]:
-            if path == prefix or path == f"{prefix}/":
-                request.scope["path"] = "/"
-                break
-            elif path.startswith(prefix + "/"):
-                request.scope["path"] = path[len(prefix):]
-                break
+        matched_path = request.headers.get("x-matched-path") or request.headers.get("x-invoke-path")
+        if matched_path:
+            clean_path = matched_path.split("?")[0]
+            request.scope["path"] = clean_path
+        else:
+            path = request.scope.get("path", "")
+            for prefix in ["/api/index.py", "/api/index", "/backend/api/index.py"]:
+                if path == prefix or path == f"{prefix}/":
+                    request.scope["path"] = "/"
+                    break
+                elif path.startswith(prefix + "/"):
+                    request.scope["path"] = path[len(prefix):]
+                    break
     return await call_next(request)
+
 
 
 @app.exception_handler(404)

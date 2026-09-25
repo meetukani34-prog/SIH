@@ -7,8 +7,21 @@ from app.models.ethics_review import EthicsReview
 from app.models.document import Document
 from app.models.audit_log import AuditLog
 from app.models.notification import Notification
+from app.models.protocol_deviation import ProtocolDeviation
+from app.models.data_quality import DataQualityQuery
+from app.models.participant_visit import ParticipantVisit
 
 __all__ = [
-    "User", "Trial", "Site", "Participant", "AdverseEvent",
-    "EthicsReview", "Document", "AuditLog", "Notification",
+    "User",
+    "Trial",
+    "Site",
+    "Participant",
+    "AdverseEvent",
+    "EthicsReview",
+    "Document",
+    "AuditLog",
+    "Notification",
+    "ProtocolDeviation",
+    "DataQualityQuery",
+    "ParticipantVisit",
 ]

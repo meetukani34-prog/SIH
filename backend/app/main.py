@@ -36,8 +36,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+@app.middleware("http")
+async def handle_vercel_rewrite_paths(request: Request, call_next):
+    # Normalize path if Vercel serverless rewrite prepends the entrypoint path
+    path = request.scope.get("path", "")
+    for prefix in ["/api/index.py", "/api/index", "/backend/api/index.py"]:
+        if path == prefix or path == f"{prefix}/":
+            request.scope["path"] = "/"
+            break
+        elif path.startswith(prefix + "/"):
+            request.scope["path"] = path[len(prefix):]
+            break
+    return await call_next(request)
+
+@app.exception_handler(404)
+async def custom_404_handler(request: Request, exc):
+    return JSONResponse(
+        status_code=404,
+        content={
+            "detail": "Not Found",
+            "url_path": request.url.path,
+            "scope_path": request.scope.get("path"),
+            "root_path": request.scope.get("root_path"),
+            "available_endpoints": ["/", "/health", "/docs", "/api/trials", "/api/auth/login"],
+        }
+    )
+
 # Mount all API endpoints
 app.include_router(api_router)
+
 
 
 @app.get("/", tags=["Health"])

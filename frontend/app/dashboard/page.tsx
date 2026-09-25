@@ -48,9 +48,39 @@ const SEVERITY_COLORS: Record<string, string> = {
   SEVERE: "#ef4444",
 };
 
+const DEFAULT_COMMAND_METRICS: CommandCenterMetrics = {
+  total_studies: 12,
+  studies_by_risk: { on_track: 8, at_risk: 3, critical: 1 },
+  patient_metrics: {
+    total_enrolled: 1170,
+    target_enrolled: 1480,
+    enrolled_percentage: 79.1,
+    active_participants: 980,
+    completed_participants: 190,
+  },
+  safety_counts: {
+    total_ae: 24,
+    serious_ae: 4,
+    pending_pv_review: 3,
+    overdue_24h_reports: 0,
+    potential_signals: 1,
+  },
+  quality_metrics: {
+    open_queries: 42,
+    critical_deviations: 1,
+    major_deviations: 5,
+    data_cleanliness_pct: 94.2,
+  },
+  overdue_items: {
+    sae_overdue: 0,
+    ethics_lapsed: 0,
+    queries_aging: 0,
+  },
+};
+
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
-  const [commandMetrics, setCommandMetrics] = useState<CommandCenterMetrics | null>(null);
+  const [commandMetrics, setCommandMetrics] = useState<CommandCenterMetrics>(DEFAULT_COMMAND_METRICS);
   const [alerts, setAlerts] = useState<CommandCenterAlert[]>([]);
   const [signals, setSignals] = useState<SafetySignal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -204,15 +234,15 @@ export default function DashboardPage() {
           <div className="mt-3 flex items-center gap-1.5 flex-wrap">
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              {commandMetrics?.studies_by_risk.on_track ?? 8} On-Track
+              {commandMetrics?.studies_by_risk?.on_track ?? 8} On-Track
             </span>
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-              {commandMetrics?.studies_by_risk.at_risk ?? 3} At-Risk
+              {commandMetrics?.studies_by_risk?.at_risk ?? 3} At-Risk
             </span>
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-              {commandMetrics?.studies_by_risk.critical ?? 1} Critical
+              {commandMetrics?.studies_by_risk?.critical ?? 1} Critical
             </span>
           </div>
         </div>
@@ -228,25 +258,25 @@ export default function DashboardPage() {
           <div className="mt-3 flex items-baseline justify-between">
             <div className="flex items-baseline gap-1.5">
               <span className="text-2xl font-black text-slate-900">
-                {commandMetrics?.patient_metrics.total_enrolled ?? metrics?.total_participants ?? 1170}
+                {commandMetrics?.patient_metrics?.total_enrolled ?? metrics?.total_participants ?? 1170}
               </span>
               <span className="text-xs text-slate-400">
-                / {commandMetrics?.patient_metrics.target_enrolled ?? 1480} target
+                / {commandMetrics?.patient_metrics?.target_enrolled ?? 1480} target
               </span>
             </div>
             <span className="text-xs font-bold text-blue-600">
-              {commandMetrics?.patient_metrics.enrolled_percentage ?? 79.1}%
+              {commandMetrics?.patient_metrics?.enrolled_percentage ?? 79.1}%
             </span>
           </div>
           {/* Progress bar */}
           <div className="mt-3 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
             <div
               className="bg-blue-600 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${commandMetrics?.patient_metrics.enrolled_percentage ?? 79.1}%` }}
+              style={{ width: `${commandMetrics?.patient_metrics?.enrolled_percentage ?? 79.1}%` }}
             />
           </div>
           <p className="text-[11px] text-slate-400 mt-2">
-            {commandMetrics?.patient_metrics.active_participants ?? 980} active in treatment
+            {commandMetrics?.patient_metrics?.active_participants ?? 980} active in treatment
           </p>
         </div>
 
@@ -260,20 +290,20 @@ export default function DashboardPage() {
           </div>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-2xl font-black text-slate-900">
-              {commandMetrics?.safety_counts.total_ae ?? metrics?.total_adverse_events ?? 24}
+              {commandMetrics?.safety_counts?.total_ae ?? metrics?.total_adverse_events ?? 24}
             </span>
             <span className="text-xs font-bold text-rose-600">
-              {commandMetrics?.safety_counts.serious_ae ?? metrics?.active_saes ?? 4} Serious (SAE)
+              {commandMetrics?.safety_counts?.serious_ae ?? metrics?.active_saes ?? 4} Serious (SAE)
             </span>
           </div>
           <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500">
-            <span>Pending PV: {commandMetrics?.safety_counts.pending_pv_review ?? 3}</span>
+            <span>Pending PV: {commandMetrics?.safety_counts?.pending_pv_review ?? 3}</span>
             <span className="font-semibold text-emerald-600">
-              Overdue 24h: {commandMetrics?.safety_counts.overdue_24h_reports ?? 0}
+              Overdue 24h: {commandMetrics?.safety_counts?.overdue_24h_reports ?? 0}
             </span>
           </div>
           <p className="text-[11px] text-amber-600 font-semibold mt-1">
-            {commandMetrics?.safety_counts.potential_signals ?? 1} Safety Signal Under Analysis
+            {commandMetrics?.safety_counts?.potential_signals ?? 1} Safety Signal Under Analysis
           </p>
         </div>
 
@@ -287,14 +317,14 @@ export default function DashboardPage() {
           </div>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-2xl font-black text-emerald-700">
-              {commandMetrics?.quality_metrics.data_cleanliness_pct ?? 94.2}%
+              {commandMetrics?.quality_metrics?.data_cleanliness_pct ?? 94.2}%
             </span>
             <span className="text-xs font-medium text-slate-500">Cleanliness Index</span>
           </div>
           <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500">
-            <span>Open Queries: {commandMetrics?.quality_metrics.open_queries ?? 42}</span>
+            <span>Open Queries: {commandMetrics?.quality_metrics?.open_queries ?? 42}</span>
             <span className="font-semibold text-amber-700">
-              Deviations: {commandMetrics?.quality_metrics.critical_deviations ?? 1} Crit / {commandMetrics?.quality_metrics.major_deviations ?? 5} Maj
+              Deviations: {commandMetrics?.quality_metrics?.critical_deviations ?? 1} Crit / {commandMetrics?.quality_metrics?.major_deviations ?? 5} Maj
             </span>
           </div>
           <p className="text-[11px] text-slate-400 mt-1">21 CFR Part 11 & CDISC SDTM Ready</p>

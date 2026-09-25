@@ -76,13 +76,16 @@ app.include_router(api_router)
 
 
 @app.get("/", tags=["Health"])
-def root():
+def root(request: Request):
     return {
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION,
         "status": "online",
-        "regulatory_mode": "Standard 21 CFR Part 11 & AYUSH GCP Compliant Demonstration"
+        "regulatory_mode": "Standard 21 CFR Part 11 & AYUSH GCP Compliant Demonstration",
+        "headers": dict(request.headers),
+        "scope_path": request.scope.get("path"),
     }
+
 
 
 @app.get("/health", tags=["Health"])

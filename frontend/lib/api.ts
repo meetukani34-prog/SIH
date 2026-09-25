@@ -105,11 +105,19 @@ export const api = {
   getDashboardMetrics: () => request<DashboardMetrics>("/dashboard/metrics"),
 
   // Trials
-  getTrials: (params?: { status?: string; phase?: string; search?: string }) => {
+  getTrials: (params?: {
+    status?: string;
+    phase?: string;
+    search?: string;
+    limit?: number;
+    skip?: number;
+  }) => {
     const query = new URLSearchParams();
     if (params?.status) query.append("status", params.status);
     if (params?.phase) query.append("phase", params.phase);
     if (params?.search) query.append("search", params.search);
+    if (params?.limit !== undefined) query.append("limit", String(params.limit));
+    if (params?.skip !== undefined) query.append("skip", String(params.skip));
     return request<Trial[]>(`/trials?${query.toString()}`);
   },
 
@@ -130,10 +138,17 @@ export const api = {
   getTrialSummary: (id: string) => request<any>(`/trials/${id}/summary`),
 
   // Participants
-  getParticipants: (params?: { trial_id?: string; status?: string }) => {
+  getParticipants: (params?: {
+    trial_id?: string;
+    status?: string;
+    limit?: number;
+    skip?: number;
+  }) => {
     const query = new URLSearchParams();
     if (params?.trial_id) query.append("trial_id", params.trial_id);
     if (params?.status) query.append("status", params.status);
+    if (params?.limit !== undefined) query.append("limit", String(params.limit));
+    if (params?.skip !== undefined) query.append("skip", String(params.skip));
     return request<Participant[]>(`/participants?${query.toString()}`);
   },
 
@@ -153,11 +168,19 @@ export const api = {
     }),
 
   // Adverse Events
-  getAdverseEvents: (params?: { trial_id?: string; is_serious?: boolean; sae_status?: string }) => {
+  getAdverseEvents: (params?: {
+    trial_id?: string;
+    is_serious?: boolean;
+    sae_status?: string;
+    limit?: number;
+    skip?: number;
+  }) => {
     const query = new URLSearchParams();
     if (params?.trial_id) query.append("trial_id", params.trial_id);
     if (params?.is_serious !== undefined) query.append("is_serious", String(params.is_serious));
     if (params?.sae_status) query.append("sae_status", params.sae_status);
+    if (params?.limit !== undefined) query.append("limit", String(params.limit));
+    if (params?.skip !== undefined) query.append("skip", String(params.skip));
     return request<AdverseEvent[]>(`/adverse-events?${query.toString()}`);
   },
 

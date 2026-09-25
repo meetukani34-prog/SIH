@@ -55,8 +55,10 @@ else:
     if is_serverless:
         engine = create_engine(
             target_url,
-            poolclass=NullPool,
-            pool_pre_ping=True,
+            pool_size=5,
+            max_overflow=10,
+            pool_recycle=120,
+            pool_timeout=15,
             echo=False,
         )
     else:

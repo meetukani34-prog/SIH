@@ -1,7 +1,7 @@
 """Dashboard & Analytical Intelligence API endpoints."""
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from app.database import get_db
 from app.models.trial import Trial
@@ -14,6 +14,7 @@ from app.auth.dependencies import get_current_user
 from app.services.sae_service import get_sae_hours_remaining
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard Intelligence"])
+
 
 
 @router.get("/metrics", response_model=DashboardMetrics)
@@ -55,10 +56,20 @@ def get_dashboard_metrics(
     ae_by_severity = [StatusDistribution(status=sev or "UNKNOWN", count=c) for sev, c in severity_counts]
 
     # Urgent SAE Alerts
-    raw_saes = db.query(AdverseEvent).filter(
-        AdverseEvent.is_serious == True,
-        AdverseEvent.sae_status.in_(["PENDING_24H", "OVERDUE"])
-    ).order_by(AdverseEvent.onset_date.desc()).limit(5).all()
+    raw_saes = (
+        db.query(AdverseEvent)
+        .options(
+            joinedload(AdverseEvent.trial),
+            joinedload(AdverseEvent.participant)
+        )
+        .filter(
+            AdverseEvent.is_serious == True,
+            AdverseEvent.sae_status.in_(["PENDING_24H", "OVERDUE"])
+        )
+        .order_by(AdverseEvent.onset_date.desc())
+        .limit(5)
+        .all()
+    )
 
     urgent_sae_alerts = []
     for ae in raw_saes:
@@ -67,8 +78,8 @@ def get_dashboard_metrics(
             ae.sae_status = "OVERDUE"
             db.commit()
 
-        trial = db.query(Trial).filter(Trial.id == ae.trial_id).first()
-        participant = db.query(Participant).filter(Participant.id == ae.participant_id).first()
+        trial = ae.trial
+        participant = ae.participant
 
         urgent_sae_alerts.append(SaeAlert(
             id=ae.id,

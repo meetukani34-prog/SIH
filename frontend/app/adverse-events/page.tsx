@@ -65,21 +65,31 @@ export default function AdverseEventsPage() {
 
   const currentUser = getCurrentUser();
 
-  const loadData = async () => {
+  const loadData = async (isInitial = false) => {
     try {
-      const [aeData, tData, pData] = await Promise.all([
-        api.getAdverseEvents({
+      if (isInitial || trials.length === 0) {
+        const [aeData, tData, pData] = await Promise.all([
+          api.getAdverseEvents({
+            is_serious:
+              filterSerious === "SAE_ONLY" ? true : filterSerious === "NON_SERIOUS" ? false : undefined,
+            limit: 50,
+          }),
+          api.getTrials({ limit: 50 }),
+          api.getParticipants({ limit: 50 }),
+        ]);
+        setAdverseEvents(aeData);
+        setTrials(tData);
+        setParticipants(pData);
+        if (tData.length > 0 && !modalTrialId) setModalTrialId(tData[0].id);
+        if (pData.length > 0 && !modalParticipantId) setModalParticipantId(pData[0].id);
+      } else {
+        const aeData = await api.getAdverseEvents({
           is_serious:
             filterSerious === "SAE_ONLY" ? true : filterSerious === "NON_SERIOUS" ? false : undefined,
-        }),
-        api.getTrials(),
-        api.getParticipants(),
-      ]);
-      setAdverseEvents(aeData);
-      setTrials(tData);
-      setParticipants(pData);
-      if (tData.length > 0 && !modalTrialId) setModalTrialId(tData[0].id);
-      if (pData.length > 0 && !modalParticipantId) setModalParticipantId(pData[0].id);
+          limit: 50,
+        });
+        setAdverseEvents(aeData);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -88,7 +98,7 @@ export default function AdverseEventsPage() {
   };
 
   useEffect(() => {
-    loadData();
+    loadData(trials.length === 0);
   }, [filterSerious]);
 
   // AI Terminology Auto-Lookup debounce

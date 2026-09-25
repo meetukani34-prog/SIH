@@ -4,7 +4,7 @@ from typing import List, Optional
 from uuid import UUID
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status, Request
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.database import get_db
 from app.models.adverse_event import AdverseEvent
 from app.models.trial import Trial
@@ -31,7 +31,11 @@ def get_adverse_events(
     db: Session = Depends(get_db)
 ):
     """List adverse events with optional filtering."""
-    query = db.query(AdverseEvent)
+    query = db.query(AdverseEvent).options(
+        joinedload(AdverseEvent.participant),
+        joinedload(AdverseEvent.trial),
+        joinedload(AdverseEvent.reporter),
+    )
     if trial_id:
         query = query.filter(AdverseEvent.trial_id == trial_id)
     if participant_id:

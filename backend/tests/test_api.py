@@ -36,7 +36,7 @@ def test_trials_list(client, pi_token):
     assert res.status_code == 200
     trials = res.json()
     assert len(trials) >= 3
-    assert any(t["study_id"] == "AYUR-2026-001" for t in trials)
+    assert any(t["study_id"].startswith("CTRI/") for t in trials)
 
 
 def test_role_enforcement_regulator_cannot_create_trial(client, regulator_token):

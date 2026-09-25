@@ -57,3 +57,7 @@ Thumbs.db
 # Internal tooling
 .jetro/
 .gemini/
+.agents/
+.cursor/
+.mcp.json
+.windsurfrules

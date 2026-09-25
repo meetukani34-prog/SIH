@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Integer, Date, DateTime, ForeignKey, Uuid
+from sqlalchemy import Column, String, Integer, Date, DateTime, ForeignKey, Uuid, Text
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -11,14 +11,14 @@ class Trial(Base):
     __tablename__ = "trials"
 
     id = Column(Uuid, primary_key=True, default=uuid.uuid4)
-    study_id = Column(String(50), unique=True, nullable=False, index=True)
+    study_id = Column(String(100), unique=True, nullable=False, index=True)
     ctri_number = Column(String(100), nullable=True)
-    title = Column(String(500), nullable=False)
-    short_title = Column(String(200), nullable=True)
-    phase = Column(String(50), nullable=True)  # Phase I, II, III, IV, Observational
+    title = Column(Text, nullable=False)
+    short_title = Column(Text, nullable=True)
+    phase = Column(String(100), nullable=True)  # Phase I, II, III, IV, Observational
     study_type = Column(String(100), nullable=True)
-    intervention = Column(String(500), nullable=True)
-    indication = Column(String(500), nullable=True)
+    intervention = Column(Text, nullable=True)
+    indication = Column(Text, nullable=True)
     principal_investigator_id = Column(Uuid, ForeignKey("users.id"), nullable=True)
     site_id = Column(Uuid, ForeignKey("sites.id"), nullable=True)
     target_sample_size = Column(Integer, nullable=True)

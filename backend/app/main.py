@@ -10,7 +10,10 @@ import app.models  # Ensure all SQLAlchemy models are registered
 from app.api import api_router
 
 # Initialize database schema tables if not exist
-Base.metadata.create_all(bind=engine)
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    print(f"Warning: Database tables could not be created automatically on startup: {e}")
 
 app = FastAPI(
     title=f"{settings.APP_NAME} API",
@@ -23,8 +26,8 @@ app = FastAPI(
 # CORS middleware configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list + ["*"],  # Allow frontend origin
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -46,3 +49,15 @@ def root():
 @app.get("/health", tags=["Health"])
 def health():
     return {"status": "healthy"}
+
+
+@app.get("/api/seed", tags=["Admin"])
+@app.post("/api/seed", tags=["Admin"])
+def trigger_seed():
+    """Seed the database with initial clinical trial data and demo accounts."""
+    try:
+        from app.seed import seed_database
+        seed_database()
+        return {"status": "success", "message": "Database successfully initialized and seeded with demo data."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}

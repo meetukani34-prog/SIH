@@ -51,6 +51,19 @@ export function Header() {
   }, []);
 
   useEffect(() => {
+    const onUserChanged = (e: Event) => {
+      const custom = e as CustomEvent;
+      if (custom.detail) {
+        setCurrentUserState(custom.detail);
+      } else {
+        setCurrentUserState(getCurrentUser());
+      }
+    };
+    window.addEventListener("ayurctms_user_changed", onUserChanged);
+    return () => window.removeEventListener("ayurctms_user_changed", onUserChanged);
+  }, []);
+
+  useEffect(() => {
     async function loadNotifications() {
       try {
         const notifs = await api.getNotifications();
@@ -64,11 +77,32 @@ export function Header() {
 
   const handleSwitchRole = async (persona: (typeof DEMO_PERSONAS)[0]) => {
     try {
-      const demoPassword = process.env.NEXT_PUBLIC_DEMO_PASSWORD || "";
-      const data = await api.login(persona.email, demoPassword);
-      setCurrentUserState(data.user);
+      // 1. Optimistic instant local update (0ms latency, no page refresh)
+      const personaUser = {
+        id: `user-${persona.role.toLowerCase()}`,
+        name: persona.name,
+        email: persona.email,
+        role: persona.role,
+        institution: persona.institution,
+        created_at: new Date().toISOString(),
+      };
+      setCurrentUser(personaUser);
+      setCurrentUserState(personaUser);
       setShowRoleMenu(false);
-      window.location.reload();
+
+      // 2. Dispatch cross-component event so Dashboard & Sidebar immediately render the role's view
+      window.dispatchEvent(new CustomEvent("ayurctms_user_changed", { detail: personaUser }));
+
+      // 3. Authenticate with backend in background to refresh JWT token
+      const demoPassword = process.env.NEXT_PUBLIC_DEMO_PASSWORD || "Password123!";
+      api.login(persona.email, demoPassword).then((data) => {
+        if (data?.user) {
+          setCurrentUser(data.user);
+          setCurrentUserState(data.user);
+        }
+      }).catch(() => {
+        // Silently preserve local session if backend auth is slow/offline
+      });
     } catch (e) {
       console.error(e);
     }

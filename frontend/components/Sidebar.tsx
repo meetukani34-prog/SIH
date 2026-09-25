@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -19,6 +19,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { getCurrentUser, removeToken } from "@/lib/api";
+import { User } from "@/lib/types";
 
 interface NavItem {
   href: string;
@@ -69,7 +70,21 @@ const navGroups: NavGroup[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const user = getCurrentUser();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    setUser(getCurrentUser());
+    const onUserChanged = (e: Event) => {
+      const custom = e as CustomEvent;
+      if (custom.detail) {
+        setUser(custom.detail);
+      } else {
+        setUser(getCurrentUser());
+      }
+    };
+    window.addEventListener("ayurctms_user_changed", onUserChanged);
+    return () => window.removeEventListener("ayurctms_user_changed", onUserChanged);
+  }, []);
 
   const handleLogout = () => {
     removeToken();

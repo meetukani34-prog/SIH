@@ -4,7 +4,7 @@ FastAPI Backend Application Entrypoint.
 
 from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import engine, Base, get_db
@@ -94,6 +94,11 @@ app.include_router(api_router)
 
 
 
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return Response(status_code=204)
+
+
 @app.get("/", tags=["Health"])
 def root():
     return {
@@ -103,6 +108,7 @@ def root():
         "regulatory_mode": "Standard 21 CFR Part 11 & AYUSH GCP Compliant Demonstration",
         "docs_url": "/docs"
     }
+
 
 
 
